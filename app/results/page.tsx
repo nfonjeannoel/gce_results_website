@@ -11,6 +11,16 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Input } from "@/components/ui/input"
 import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { 
   Search, 
   GraduationCap, 
   ArrowLeft, 
@@ -58,6 +68,11 @@ function ResultsContent() {
   const [currentPage, setCurrentPage] = useState(1)
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const [localSearchQuery, setLocalSearchQuery] = useState("")
+  
+  // Back button confirmation dialog state
+  const [showBackConfirmation, setShowBackConfirmation] = useState(false)
+  // Flag to prevent popstate handler during intentional navigation
+  const [isNavigatingAway, setIsNavigatingAway] = useState(false)
   
   // Filter results based on local search query
   const filteredResults = allResults.filter(result => {
@@ -137,6 +152,41 @@ function ResultsContent() {
     fetchResults()
   }, [searchType, searchValue, level, year])
 
+  // Handle browser back button
+  useEffect(() => {
+    // Push a state to the history stack when component mounts
+    const currentUrl = window.location.href
+    window.history.pushState({ page: 'results' }, '', currentUrl)
+
+    const handlePopState = (event: PopStateEvent) => {
+      // If we're intentionally navigating away, don't interfere
+      if (isNavigatingAway) {
+        return
+      }
+      
+      // Prevent the default back navigation
+      event.preventDefault()
+      
+      // Push the state back to prevent actual navigation
+      window.history.pushState({ page: 'results' }, '', currentUrl)
+      
+      // Use our custom back button logic
+      if (currentPage === 1) {
+        setShowBackConfirmation(true)
+      } else {
+        handlePageChange(currentPage - 1)
+      }
+    }
+
+    // Add the event listener
+    window.addEventListener('popstate', handlePopState)
+
+    // Cleanup function
+    return () => {
+      window.removeEventListener('popstate', handlePopState)
+    }
+  }, [currentPage, isNavigatingAway]) // Re-run when currentPage or isNavigatingAway changes
+
   // Header scroll behavior
   useEffect(() => {
     const handleScroll = () => {
@@ -201,6 +251,24 @@ function ResultsContent() {
     return papers.split(',').map(paper => paper.trim()).filter(Boolean)
   }
 
+  const handleBackButton = () => {
+    if (currentPage === 1) {
+      // If on first page, show confirmation dialog
+      setShowBackConfirmation(true)
+    } else {
+      // If not on first page, go to previous page
+      handlePageChange(currentPage - 1)
+    }
+  }
+
+  const handleConfirmBack = () => {
+    router.push('/')
+  }
+
+  const handleCancelBack = () => {
+    setShowBackConfirmation(false)
+  }
+
   if (!searchType || !searchValue || !level || !year) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
@@ -235,7 +303,7 @@ function ResultsContent() {
           <div className="flex items-center gap-4">
             <Button 
               variant="ghost" 
-              onClick={() => router.push('/')}
+              onClick={handleBackButton}
               className="p-2"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -551,6 +619,26 @@ function ResultsContent() {
           )}
         </div>
       </main>
+
+      {/* Back confirmation dialog */}
+      <AlertDialog open={showBackConfirmation} onOpenChange={setShowBackConfirmation}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Leave Results Page?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to go back to the search page? This will take you away from the current results.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelBack}>
+              Stay on Results
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmBack}>
+              Go Back to Search
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
