@@ -1,17 +1,16 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Separator } from "@/components/ui/separator"
-import { Search, GraduationCap, School, Hash, Calendar, BookOpen, HelpCircle, Sparkles } from "lucide-react"
+import { Search, GraduationCap, School, Hash, Calendar, BookOpen, HelpCircle } from "lucide-react"
+import { supabase, levelMapping, type LevelCode } from "@/lib/supabase"
 
 export default function HomePage() {
   const [searchType, setSearchType] = useState("name")
@@ -24,9 +23,54 @@ export default function HomePage() {
     level: "",
     year: ""
   })
+  const [availableYears, setAvailableYears] = useState<number[]>([])
+  const [availableLevels, setAvailableLevels] = useState<LevelCode[]>([])
+  const [dataLoading, setDataLoading] = useState(true)
 
-  const currentYear = new Date().getFullYear()
-  const availableYears = Array.from({ length: 6 }, (_, i) => currentYear - i)
+  // Fetch available years and levels from database
+  useEffect(() => {
+    const fetchMetadata = async () => {
+      try {
+        setDataLoading(true)
+        
+        // Fetch unique years using efficient database function
+        const { data: yearData, error: yearError } = await supabase
+          .rpc('get_distinct_years')
+        
+        if (yearError) throw yearError
+        
+        // Fetch unique levels using efficient database function
+        const { data: levelData, error: levelError } = await supabase
+          .rpc('get_distinct_levels')
+        
+        if (levelError) throw levelError
+        
+        // Data is already unique and sorted from the database functions
+        const uniqueYears = yearData?.map(item => item.year) || []
+        const uniqueLevels = levelData?.map(item => item.level) || [] as LevelCode[]
+        
+        setAvailableYears(uniqueYears)
+        setAvailableLevels(uniqueLevels)
+        
+      } catch (error) {
+        console.error('Error fetching metadata:', error)
+        setError('Failed to load available years and levels')
+      } finally {
+        setDataLoading(false)
+      }
+    }
+    
+    fetchMetadata()
+  }, [])
+
+  const getSearchPlaceholder = () => {
+    switch (searchType) {
+      case "name": return "Enter any part of the student's name..."
+      case "number": return "Enter 5-digit center number..."
+      case "school": return "Enter school or center name..."
+      default: return ""
+    }
+  }
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -46,8 +90,8 @@ export default function HomePage() {
     }
 
     const yearNum = parseInt(formData.year)
-    if (yearNum < 2019 || yearNum > currentYear) {
-      setError(`Results are only available for years 2019-${currentYear}`)
+    if (!availableYears.includes(yearNum)) {
+      setError(`Results are only available for years: ${availableYears.join(', ')}`)
       setIsLoading(false)
       return
     }
@@ -67,37 +111,21 @@ export default function HomePage() {
     }
   }
 
-  const getSearchPlaceholder = () => {
-    switch (searchType) {
-      case "name": return "Enter student's full name..."
-      case "number": return "Enter 5-digit center number..."
-      case "school": return "Enter school/center name..."
-      default: return ""
-    }
-  }
 
-  const getSearchIcon = () => {
-    switch (searchType) {
-      case "name": return <GraduationCap className="h-4 w-4" />
-      case "number": return <Hash className="h-4 w-4" />
-      case "school": return <School className="h-4 w-4" />
-      default: return <Search className="h-4 w-4" />
-    }
-  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b bg-white/80 backdrop-blur-md dark:bg-gray-900/80">
+      <header className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:bg-gray-950/95 dark:supports-[backdrop-filter]:bg-gray-950/60">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-blue-600 to-green-600">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600">
               <GraduationCap className="h-5 w-5 text-white" />
             </div>
-            <span className="text-xl font-bold">GCE Results</span>
+            <span className="text-xl font-semibold tracking-tight">GCE Results</span>
           </div>
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
               <HelpCircle className="h-4 w-4 mr-2" />
               Help
             </Button>
@@ -107,47 +135,23 @@ export default function HomePage() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        {/* Hero Section */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 mb-6 text-sm font-medium text-blue-700 bg-blue-100 rounded-full dark:text-blue-300 dark:bg-blue-900/30">
-            <Sparkles className="h-4 w-4" />
-            Fast & Reliable Results Search
+      <main className="container mx-auto px-4 py-12">
+        <div className="max-w-3xl mx-auto">
+          {/* Clean Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold tracking-tight mb-3 font-serif">
+              Search Results
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              Find your GCE examination results quickly
+            </p>
           </div>
-          
-          <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
-            Find Your GCE Results
-          </h1>
-          
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Search for your General Certificate of Education results quickly and securely. 
-            Available for O-Level and A-Level examinations from 2019 onwards.
-          </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Badge variant="outline">2019-{currentYear}</Badge>
-              <span>Available Years</span>
-            </div>
-            <Separator orientation="vertical" className="h-4" />
-            <div className="flex items-center gap-2">
-              <Badge variant="outline">O & A Level</Badge>
-              <span>All Levels</span>
-            </div>
-            <Separator orientation="vertical" className="h-4" />
-            <div className="flex items-center gap-2">
-              <Badge variant="outline">Instant</Badge>
-              <span>Fast Search</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Search Form */}
-        <div className="max-w-2xl mx-auto">
-          <Card className="border-0 shadow-xl bg-white/50 backdrop-blur-sm dark:bg-gray-800/50">
-            <CardHeader className="text-center pb-2">
-              <CardTitle className="text-2xl">Search Your Results</CardTitle>
-              <CardDescription>
+          {/* Search Form */}
+          <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm dark:bg-gray-900/80">
+            <CardHeader className="pb-6">
+              <CardTitle className="text-2xl font-serif">Search Your Results</CardTitle>
+              <CardDescription className="text-base">
                 Choose your search method and enter the required information
               </CardDescription>
             </CardHeader>
@@ -161,27 +165,30 @@ export default function HomePage() {
               )}
 
               <form onSubmit={handleSearch} className="space-y-6">
-                {/* Search Type Tabs */}
+                {/* Search Type Tabs - Mobile Friendly */}
                 <Tabs value={searchType} onValueChange={setSearchType} className="w-full">
-                  <TabsList className="grid w-full grid-cols-3 mb-6">
-                    <TabsTrigger value="name" className="flex items-center gap-2">
+                  <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 mb-6 h-auto p-1">
+                    <TabsTrigger value="name" className="flex items-center gap-2 py-3 px-2 text-sm">
                       <GraduationCap className="h-4 w-4" />
-                      Student Name
+                      <span className="hidden sm:inline">Student Name</span>
+                      <span className="sm:hidden">Name</span>
                     </TabsTrigger>
-                    <TabsTrigger value="number" className="flex items-center gap-2">
+                    <TabsTrigger value="number" className="flex items-center gap-2 py-3 px-2 text-sm">
                       <Hash className="h-4 w-4" />
-                      Center Number
+                      <span className="hidden sm:inline">Center Number</span>
+                      <span className="sm:hidden">Number</span>
                     </TabsTrigger>
-                    <TabsTrigger value="school" className="flex items-center gap-2">
+                    <TabsTrigger value="school" className="flex items-center gap-2 py-3 px-2 text-sm">
                       <School className="h-4 w-4" />
-                      School Name
+                      <span className="hidden sm:inline">School Name</span>
+                      <span className="sm:hidden">School</span>
                     </TabsTrigger>
                   </TabsList>
 
                   {/* Search Input */}
                   <TabsContent value="name" className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="student-name">Student Full Name</Label>
+                      <Label htmlFor="student-name">Student Name</Label>
                       <div className="relative">
                         <GraduationCap className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
@@ -196,7 +203,7 @@ export default function HomePage() {
                         />
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Enter the name exactly as it appears on the examination registration
+                        Enter any part of the student's name - first name, last name, or both in order
                       </p>
                     </div>
                   </TabsContent>
@@ -259,10 +266,17 @@ export default function HomePage() {
                         </div>
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="OLG">O-Level General</SelectItem>
-                        <SelectItem value="OLT">O-Level Technical</SelectItem>
-                        <SelectItem value="ALG">A-Level General</SelectItem>
-                        <SelectItem value="ALT">A-Level Technical</SelectItem>
+                        {dataLoading ? (
+                          <SelectItem value="loading" disabled>Loading levels...</SelectItem>
+                        ) : availableLevels.length > 0 ? (
+                          availableLevels.map((levelCode) => (
+                            <SelectItem key={levelCode} value={levelCode}>
+                              {levelMapping[levelCode]}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="no-data" disabled>No levels available</SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -277,11 +291,17 @@ export default function HomePage() {
                         </div>
                       </SelectTrigger>
                       <SelectContent>
-                        {availableYears.map((year) => (
-                          <SelectItem key={year} value={year.toString()}>
-                            {year}
-                          </SelectItem>
-                        ))}
+                        {dataLoading ? (
+                          <SelectItem value="loading" disabled>Loading years...</SelectItem>
+                        ) : availableYears.length > 0 ? (
+                          availableYears.map((year) => (
+                            <SelectItem key={year} value={year.toString()}>
+                              {year}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="no-data" disabled>No years available</SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -291,7 +311,7 @@ export default function HomePage() {
                 <Button 
                   type="submit" 
                   size="lg" 
-                  className="w-full bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
+                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-200"
                   disabled={isLoading}
                 >
                   {isLoading ? (
@@ -309,41 +329,34 @@ export default function HomePage() {
               </form>
             </CardContent>
           </Card>
-        </div>
 
-        {/* Help Section */}
-        <div className="mt-16 text-center">
-          <h2 className="text-2xl font-semibold mb-6">Need Help?</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            <Card className="border-0 shadow-sm">
-              <CardContent className="pt-6 text-center">
-                <GraduationCap className="h-8 w-8 mx-auto mb-4 text-blue-600" />
-                <h3 className="font-semibold mb-2">Can't Find Your Name?</h3>
-                <p className="text-sm text-muted-foreground">
-                  Try different variations of your name or check for spelling differences
+          {/* Compact Help Section */}
+          <div className="mt-12">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="text-center p-4 rounded-lg bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50">
+                <GraduationCap className="h-6 w-6 mx-auto mb-2 text-blue-600" />
+                <h3 className="font-medium text-sm mb-1">Name Search</h3>
+                <p className="text-xs text-muted-foreground">
+                  Works with partial names in order
                 </p>
-              </CardContent>
-            </Card>
+              </div>
 
-            <Card className="border-0 shadow-sm">
-              <CardContent className="pt-6 text-center">
-                <Hash className="h-8 w-8 mx-auto mb-4 text-green-600" />
-                <h3 className="font-semibold mb-2">Center Number</h3>
-                <p className="text-sm text-muted-foreground">
-                  Your 5-digit center number is on your examination slip
+              <div className="text-center p-4 rounded-lg bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50">
+                <Hash className="h-6 w-6 mx-auto mb-2 text-indigo-600" />
+                <h3 className="font-medium text-sm mb-1">Center Number</h3>
+                <p className="text-xs text-muted-foreground">
+                  Found on examination slip
                 </p>
-              </CardContent>
-            </Card>
+              </div>
 
-            <Card className="border-0 shadow-sm">
-              <CardContent className="pt-6 text-center">
-                <School className="h-8 w-8 mx-auto mb-4 text-purple-600" />
-                <h3 className="font-semibold mb-2">School Search</h3>
-                <p className="text-sm text-muted-foreground">
-                  Use the full official name of your school or examination center
+              <div className="text-center p-4 rounded-lg bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50">
+                <School className="h-6 w-6 mx-auto mb-2 text-purple-600" />
+                <h3 className="font-medium text-sm mb-1">School Search</h3>
+                <p className="text-xs text-muted-foreground">
+                  Use official school name
                 </p>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         </div>
       </main>
