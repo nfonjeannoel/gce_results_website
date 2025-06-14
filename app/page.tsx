@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
+import Link from "next/link"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,7 +15,52 @@ import { Search, GraduationCap, School, Hash, Calendar, BookOpen, HelpCircle } f
 import { supabase, levelMapping, type LevelCode } from "@/lib/supabase"
 
 export default function HomePage() {
-  const [searchType, setSearchType] = useState("name")
+  const searchParams = useSearchParams()
+  const tabParam = searchParams.get('tab')
+  
+  // Header visibility state
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true)
+  const [lastScrollY, setLastScrollY] = useState(0)
+  
+  const [searchType, setSearchType] = useState(() => {
+    // Initialize search type based on URL parameter
+    if (tabParam === 'name' || tabParam === 'number' || tabParam === 'school') {
+      return tabParam
+    }
+    return "name"
+  })
+  
+  // Watch for URL parameter changes
+  useEffect(() => {
+    const currentTab = searchParams.get('tab')
+    if (currentTab === 'name' || currentTab === 'number' || currentTab === 'school') {
+      setSearchType(currentTab)
+    }
+  }, [searchParams])
+  
+  // Header scroll behavior
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY
+      
+      // Show header when at the top
+      if (currentScrollY < 10) {
+        setIsHeaderVisible(true)
+      }
+      // Hide header when scrolling down, show when scrolling up
+      else if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        setIsHeaderVisible(false)
+      } else if (currentScrollY < lastScrollY) {
+        setIsHeaderVisible(true)
+      }
+      
+      setLastScrollY(currentScrollY)
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [lastScrollY])
+  
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [formData, setFormData] = useState({
@@ -152,26 +199,30 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:bg-gray-950/95 dark:supports-[backdrop-filter]:bg-gray-950/60">
+      <header className={`fixed top-0 left-0 right-0 z-50 border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:bg-gray-950/95 dark:supports-[backdrop-filter]:bg-gray-950/60 transition-transform duration-300 ${
+        isHeaderVisible ? 'translate-y-0' : '-translate-y-full'
+      }`}>
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600">
               <GraduationCap className="h-5 w-5 text-white" />
             </div>
             <span className="text-xl font-semibold tracking-tight">GCE Results</span>
-          </div>
+          </Link>
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-              <HelpCircle className="h-4 w-4 mr-2" />
-              Help
+            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground" asChild>
+              <Link href="/contact">
+                <HelpCircle className="h-4 w-4 mr-2" />
+                Help
+              </Link>
             </Button>
             <ThemeToggle />
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-12">
+      {/* Main Content - Add top padding to account for fixed header */}
+      <main className="container mx-auto px-4 py-12 pt-28">
         <div className="max-w-3xl mx-auto">
           {/* Clean Header */}
           <div className="text-center mb-8">
@@ -204,17 +255,26 @@ export default function HomePage() {
                 {/* Search Type Tabs - Mobile Friendly */}
                 <Tabs value={searchType} onValueChange={setSearchType} className="w-full">
                   <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 mb-6 h-auto p-1">
-                    <TabsTrigger value="name" className="flex items-center gap-2 py-3 px-2 text-sm">
+                    <TabsTrigger 
+                      value="name" 
+                      className="flex items-center gap-2 py-3 px-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 hover:scale-105 transition-all duration-200 cursor-pointer"
+                    >
                       <GraduationCap className="h-4 w-4" />
                       <span className="hidden sm:inline">Student Name</span>
                       <span className="sm:hidden">Name</span>
                     </TabsTrigger>
-                    <TabsTrigger value="number" className="flex items-center gap-2 py-3 px-2 text-sm">
+                    <TabsTrigger 
+                      value="number" 
+                      className="flex items-center gap-2 py-3 px-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 hover:scale-105 transition-all duration-200 cursor-pointer"
+                    >
                       <Hash className="h-4 w-4" />
                       <span className="hidden sm:inline">Center Number</span>
                       <span className="sm:hidden">Number</span>
                     </TabsTrigger>
-                    <TabsTrigger value="school" className="flex items-center gap-2 py-3 px-2 text-sm">
+                    <TabsTrigger 
+                      value="school" 
+                      className="flex items-center gap-2 py-3 px-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 hover:scale-105 transition-all duration-200 cursor-pointer"
+                    >
                       <School className="h-4 w-4" />
                       <span className="hidden sm:inline">School Name</span>
                       <span className="sm:hidden">School</span>
