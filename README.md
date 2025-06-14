@@ -4,6 +4,10 @@
 
 A modern, fast, and user-friendly web application that allows students to search for their General Certificate of Education (GCE) examination results from Cameroon. Built with Next.js 15, TypeScript, and Supabase.
 
+## ⚠️ Disclaimer
+
+**This entire codebase was generated using artificial intelligence (AI).** While the code has been tested and reviewed, please use it at your own discretion and verify functionality as needed for your specific use case.
+
 ## 🌐 Live Demo
 
 **Production**: [https://gceresults.jeangineer.com](https://gceresults.jeangineer.com)

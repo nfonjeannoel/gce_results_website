@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, Suspense } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
@@ -11,11 +11,12 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Search, GraduationCap, School, Hash, Calendar, BookOpen, HelpCircle } from "lucide-react"
+import { Search, GraduationCap, School, Hash, Calendar, BookOpen, HelpCircle, Github } from "lucide-react"
 import { supabase, levelMapping, type LevelCode } from "@/lib/supabase"
 
 function HomePageContent() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const tabParam = searchParams.get('tab')
   
   // Header visibility state
@@ -73,6 +74,11 @@ function HomePageContent() {
   const [availableYears, setAvailableYears] = useState<number[]>([])
   const [availableLevels, setAvailableLevels] = useState<LevelCode[]>([])
   const [dataLoading, setDataLoading] = useState(true)
+
+  // Reset loading state when component mounts (e.g., when navigating back)
+  useEffect(() => {
+    setIsLoading(false)
+  }, [])
 
   // Fetch available years and levels from database
   useEffect(() => {
@@ -185,8 +191,8 @@ function HomePageContent() {
         year: formData.year
       })
       
-      // Use window.location to navigate (alternative to useRouter for form submission)
-      window.location.href = `/results?${searchParams.toString()}`
+      // Use Next.js router for navigation to properly handle state
+      router.push(`/results?${searchParams.toString()}`)
       
     } catch (err) {
       setError("We encountered an error. Please check your network and try again.")
@@ -208,6 +214,12 @@ function HomePageContent() {
             <span className="text-xl font-semibold tracking-tight">GCE Results</span>
           </Link>
           <div className="flex items-center gap-4">
+            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground" asChild>
+              <a href="https://github.com/nfonjeannoel/gce_results_website" target="_blank" rel="noopener noreferrer">
+                <Github className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Open Source</span>
+              </a>
+            </Button>
             <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground" asChild>
               <Link href="/contact">
                 <HelpCircle className="h-4 w-4 mr-2" />
