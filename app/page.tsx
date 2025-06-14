@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -14,7 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Search, GraduationCap, School, Hash, Calendar, BookOpen, HelpCircle } from "lucide-react"
 import { supabase, levelMapping, type LevelCode } from "@/lib/supabase"
 
-export default function HomePage() {
+function HomePageContent() {
   const searchParams = useSearchParams()
   const tabParam = searchParams.get('tab')
   
@@ -193,8 +193,6 @@ export default function HomePage() {
       setIsLoading(false)
     }
   }
-
-
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
@@ -457,5 +455,13 @@ export default function HomePage() {
         </div>
       </main>
     </div>
+  )
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <HomePageContent />
+    </Suspense>
   )
 }
