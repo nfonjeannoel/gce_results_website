@@ -1,0 +1,23 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://gce-results.netlify.app/sitemap.xml
+
+# Crawl delay
+Crawl-delay: 1
+
+# Specific rules for better crawling
+Allow: /results
+Allow: /api/search
+
+# Block unnecessary paths
+Disallow: /api/
+Disallow: /_next/
+Disallow: /admin/
+Disallow: /private/
+
+# Allow important static files
+Allow: /favicon.ico
+Allow: /apple-touch-icon.png
+Allow: /og-image.jpg 

@@ -176,10 +176,10 @@ export default function HomePage() {
           {/* Clean Header */}
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold tracking-tight mb-3 font-serif">
-              Search Results
+              GCE Results Search
             </h1>
             <p className="text-lg text-muted-foreground">
-              Find your GCE examination results quickly
+              Find your Cameroon GCE O-Level and A-Level examination results quickly and easily
             </p>
           </div>
 
