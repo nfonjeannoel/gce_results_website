@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Input } from "@/components/ui/input"
 import { 
   Search, 
   GraduationCap, 
@@ -51,13 +52,30 @@ function ResultsContent() {
   const [error, setError] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
+  const [localSearchQuery, setLocalSearchQuery] = useState("")
+  
+  // Filter results based on local search query
+  const filteredResults = allResults.filter(result => {
+    if (!localSearchQuery.trim()) return true
+    
+    const query = localSearchQuery.toLowerCase().trim()
+    return (
+      result.student_name.toLowerCase().includes(query) ||
+      result.center_name.toLowerCase().includes(query) ||
+      result.center_number.toLowerCase().includes(query) ||
+      result.level.toLowerCase().includes(query) ||
+      result.year.toString().includes(query) ||
+      (result.papers_passed && result.papers_passed.toLowerCase().includes(query)) ||
+      (result.student_grades && result.student_grades.toLowerCase().includes(query))
+    )
+  })
   
   // Pagination settings
   const pageSize = 40
-  const totalPages = Math.ceil(allResults.length / pageSize)
+  const totalPages = Math.ceil(filteredResults.length / pageSize)
   const startIndex = (currentPage - 1) * pageSize
   const endIndex = startIndex + pageSize
-  const currentResults = allResults.slice(startIndex, endIndex)
+  const currentResults = filteredResults.slice(startIndex, endIndex)
 
   // Get search parameters
   const searchType = searchParams.get('type')
@@ -98,6 +116,7 @@ function ResultsContent() {
       setAllResults(data.results)
       setCurrentPage(1) // Reset to first page with new results
       setExpandedItems(new Set()) // Reset expanded items
+      setLocalSearchQuery("") // Reset local search when new data is loaded
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
@@ -117,6 +136,12 @@ function ResultsContent() {
     setCurrentPage(newPage)
     setExpandedItems(new Set()) // Reset expanded items when changing page
     window.scrollTo(0, 0)
+  }
+
+  const handleLocalSearch = (query: string) => {
+    setLocalSearchQuery(query)
+    setCurrentPage(1) // Reset to first page when searching
+    setExpandedItems(new Set()) // Reset expanded items when searching
   }
 
   const toggleExpand = (recordId: string) => {
@@ -217,11 +242,24 @@ function ResultsContent() {
                   </div>
                   {allResults.length > 0 && (
                     <div className="text-sm text-muted-foreground">
-                      {allResults.length} result{allResults.length !== 1 ? 's' : ''} found
-                      {totalPages > 1 && (
-                        <span className="ml-2">
-                          (showing {startIndex + 1}-{Math.min(endIndex, allResults.length)})
-                        </span>
+                      {localSearchQuery.trim() ? (
+                        <>
+                          {filteredResults.length} of {allResults.length} result{allResults.length !== 1 ? 's' : ''}
+                          {totalPages > 1 && (
+                            <span className="ml-2">
+                              (showing {startIndex + 1}-{Math.min(endIndex, filteredResults.length)})
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          {allResults.length} result{allResults.length !== 1 ? 's' : ''} found
+                          {totalPages > 1 && (
+                            <span className="ml-2">
+                              (showing {startIndex + 1}-{Math.min(endIndex, allResults.length)})
+                            </span>
+                          )}
+                        </>
                       )}
                     </div>
                   )}
@@ -229,6 +267,65 @@ function ResultsContent() {
               </CardHeader>
             </Card>
           </div>
+
+          {/* Top Controls - Search and Pagination */}
+          {!isLoading && allResults.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
+              {/* Search Bar */}
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="relative flex-1 sm:flex-none">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                  <Input
+                    placeholder="Search within results..."
+                    value={localSearchQuery}
+                    onChange={(e) => handleLocalSearch(e.target.value)}
+                    className="pl-9 h-8 w-full sm:w-64 text-sm"
+                  />
+                </div>
+                {localSearchQuery.trim() && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleLocalSearch("")}
+                    className="h-8 px-2 text-xs"
+                  >
+                    Clear
+                  </Button>
+                )}
+              </div>
+
+              {/* Compact Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="h-8 px-2"
+                  >
+                    <ChevronLeft className="h-3 w-3" />
+                  </Button>
+                  
+                  <div className="flex items-center gap-1 mx-2">
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      {currentPage} / {totalPages}
+                    </span>
+                  </div>
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="h-8 px-2"
+                  >
+                    <ChevronRight className="h-3 w-3" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Error Alert */}
           {error && (
@@ -402,6 +499,22 @@ function ResultsContent() {
                 <Button onClick={() => router.push('/')} variant="outline">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back to Search
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* No Filtered Results */}
+          {!isLoading && allResults.length > 0 && filteredResults.length === 0 && localSearchQuery.trim() && (
+            <Card className="bg-white/80 backdrop-blur-sm dark:bg-gray-900/80">
+              <CardContent className="p-12 text-center">
+                <Search className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-semibold mb-2">No Matching Results</h3>
+                <p className="text-muted-foreground mb-6">
+                  No results match your search query "{localSearchQuery}". Try using different keywords.
+                </p>
+                <Button onClick={() => handleLocalSearch("")} variant="outline">
+                  Clear Search
                 </Button>
               </CardContent>
             </Card>
