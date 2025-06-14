@@ -20,8 +20,8 @@ export default function Page() {
               <Badge variant="secondary" className="text-sm">
                 Deployment Test • {currentDate}
               </Badge>
-              <Badge variant="outline" className="text-orange-600 border-orange-600">
-                🧪 STAGING ENVIRONMENT
+              <Badge variant="outline" className="text-green-600 border-green-600">
+                🌐 PRODUCTION ENVIRONMENT
               </Badge>
             </div>
           </div>
@@ -31,30 +31,30 @@ export default function Page() {
               <CardTitle className="flex items-center gap-2">
                 🚀 Deployment Status
                 <Badge variant="outline" className="text-green-600 border-green-600">
-                  Active
+                  Live
                 </Badge>
               </CardTitle>
               <CardDescription>
-                Testing auto-deployment from GitHub to Netlify • Currently viewing STAGING
+                Testing auto-deployment from GitHub to Netlify • Currently viewing PRODUCTION
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <h3 className="font-semibold">🌐 Production Environment</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Deploys from <code className="bg-muted px-1 py-0.5 rounded">main</code> branch
+                <div className="space-y-2 p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
+                  <h3 className="font-semibold text-green-700 dark:text-green-300">🌐 Production Environment (Current)</h3>
+                  <p className="text-sm text-green-600 dark:text-green-400">
+                    Deploys from <code className="bg-green-100 dark:bg-green-900 px-1 py-0.5 rounded">main</code> branch
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-green-600 dark:text-green-400">
                     URL: yoursite.netlify.app
                   </p>
                 </div>
-                <div className="space-y-2 p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200 dark:border-orange-800">
-                  <h3 className="font-semibold text-orange-700 dark:text-orange-300">🧪 Staging Environment (Current)</h3>
-                  <p className="text-sm text-orange-600 dark:text-orange-400">
-                    Deploys from <code className="bg-orange-100 dark:bg-orange-900 px-1 py-0.5 rounded">develop</code> branch
+                <div className="space-y-2">
+                  <h3 className="font-semibold">🧪 Staging Environment</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Deploys from <code className="bg-muted px-1 py-0.5 rounded">develop</code> branch
                   </p>
-                  <p className="text-sm text-orange-600 dark:text-orange-400">
+                  <p className="text-sm text-muted-foreground">
                     URL: develop--yoursite.netlify.app
                   </p>
                 </div>
@@ -68,7 +68,7 @@ export default function Page() {
                   <li>• Dark/Light theme switching</li>
                   <li>• shadcn/ui components</li>
                   <li>• Auto-deployment from GitHub</li>
-                  <li>• Staging environment indicators</li>
+                  <li>• Production environment indicators</li>
                 </ul>
               </div>
             </CardContent>
@@ -76,7 +76,7 @@ export default function Page() {
 
           <div className="flex flex-col sm:flex-row gap-3">
             <Button size="lg" className="min-w-32">
-              🎉 Staging Working!
+              🎉 Production Live!
             </Button>
             <Button variant="outline" size="lg" className="min-w-32">
               View Source Code
