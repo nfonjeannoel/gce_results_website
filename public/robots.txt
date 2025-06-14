@@ -2,13 +2,12 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://gce-results.netlify.app/sitemap.xml
+Sitemap: https://gceresults.jeangineer.com/sitemap.xml
 
 # Crawl delay
 Crawl-delay: 1
 
 # Specific rules for better crawling
-Allow: /results
 Allow: /api/search
 
 # Block unnecessary paths
@@ -16,6 +15,7 @@ Disallow: /api/
 Disallow: /_next/
 Disallow: /admin/
 Disallow: /private/
+Disallow: /results
 
 # Allow important static files
 Allow: /favicon.ico
