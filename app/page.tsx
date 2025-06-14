@@ -96,17 +96,53 @@ export default function HomePage() {
       return
     }
 
-    // Simulate API call
+    // Get the search value based on search type
+    let searchValue = ""
+    switch (searchType) {
+      case "name":
+        searchValue = formData.studentName.trim()
+        if (!searchValue || searchValue.length < 3) {
+          setError("Student name must be at least 3 characters long")
+          setIsLoading(false)
+          return
+        }
+        break
+      case "number":
+        searchValue = formData.centerNumber.trim()
+        if (!searchValue || searchValue.length !== 5) {
+          setError("Center number must be exactly 5 digits")
+          setIsLoading(false)
+          return
+        }
+        break
+      case "school":
+        searchValue = formData.centerName.trim()
+        if (!searchValue || searchValue.length < 4) {
+          setError("School/Center name must be at least 4 characters long")
+          setIsLoading(false)
+          return
+        }
+        break
+      default:
+        setError("Invalid search type")
+        setIsLoading(false)
+        return
+    }
+
     try {
-      // This would be your actual API call
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // Navigate to results page with search parameters
+      const searchParams = new URLSearchParams({
+        type: searchType,
+        value: searchValue,
+        level: formData.level,
+        year: formData.year
+      })
       
-      // For now, just show success
-      console.log("Searching with:", { searchType, ...formData })
+      // Use window.location to navigate (alternative to useRouter for form submission)
+      window.location.href = `/results?${searchParams.toString()}`
       
     } catch (err) {
       setError("We encountered an error. Please check your network and try again.")
-    } finally {
       setIsLoading(false)
     }
   }
