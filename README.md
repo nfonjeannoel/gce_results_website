@@ -12,6 +12,12 @@ A modern, fast, and user-friendly web application that allows students to search
 
 **Production**: [https://gceresults.jeangineer.com](https://gceresults.jeangineer.com)
 
+## 📱 Mobile App
+
+We also have an **open source Android app** available for downloading and accessing GCE results on mobile devices:
+
+**Android App Repository**: [https://github.com/nfonjeannoel/gce_results_project](https://github.com/nfonjeannoel/gce_results_project)
+
 ## ✨ Features
 
 - 🔍 **Multiple Search Methods**: Search by student name, center number, or school name
